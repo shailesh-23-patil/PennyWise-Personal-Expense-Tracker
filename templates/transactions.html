@@ -1,0 +1,296 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Transactions{% endblock %}
+
+{% block content %}
+
+<!-- Page heading -->
+<section class="page-heading heading-row">
+    <div>
+        <span class="eyebrow">YOUR MONEY ACTIVITY</span>
+        <h1>Transactions</h1>
+        <p class="muted">
+            Search, filter, and manage your financial records.
+        </p>
+    </div>
+
+    <a class="btn btn-primary" href="{{ url_for('add_transaction') }}">
+        + Add transaction
+    </a>
+</section>
+
+<!-- Transaction filters -->
+<section class="panel filters-panel">
+    <div class="panel-heading">
+        <div>
+            <h2>Find transactions</h2>
+            <p class="muted">Narrow down your records using the filters below.</p>
+        </div>
+        <span class="panel-symbol" aria-hidden="true">⌕</span>
+    </div>
+
+    <form method="get" class="filters-grid" id="transactionFilters">
+
+        <label for="transaction-search">
+            Search
+            <input
+                id="transaction-search"
+                type="search"
+                name="search"
+                value="{{ search }}"
+                placeholder="Description or category"
+                maxlength="250"
+            >
+        </label>
+
+        <label for="transaction-type-filter">
+            Type
+            <select id="transaction-type-filter" name="type">
+                <option value="">All types</option>
+                <option value="income" {% if tx_type == 'income' %}selected{% endif %}>
+                    Income
+                </option>
+                <option value="expense" {% if tx_type == 'expense' %}selected{% endif %}>
+                    Expense
+                </option>
+            </select>
+        </label>
+
+        <label for="transaction-category-filter">
+            Category
+            <select id="transaction-category-filter" name="category">
+                <option value="">All categories</option>
+
+                {% for c in all_categories %}
+                    <option
+                        value="{{ c }}"
+                        {% if category == c %}selected{% endif %}
+                    >
+                        {{ c }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label for="transaction-start-date">
+            From date
+            <input
+                id="transaction-start-date"
+                type="date"
+                name="start_date"
+                value="{{ start_date }}"
+            >
+        </label>
+
+        <label for="transaction-end-date">
+            To date
+            <input
+                id="transaction-end-date"
+                type="date"
+                name="end_date"
+                value="{{ end_date }}"
+            >
+        </label>
+
+        <div class="filter-actions">
+            <button class="btn btn-primary" type="submit">
+                Apply filters
+            </button>
+
+            <a
+                class="btn btn-secondary"
+                href="{{ url_for('transactions') }}"
+            >
+                Reset
+            </a>
+        </div>
+
+    </form>
+</section>
+
+<!-- Transactions table -->
+<section class="panel table-panel">
+
+    <div class="panel-heading">
+        <div>
+            <h2>All transactions</h2>
+            <p class="muted">
+                {{ transactions|length }}
+                record(s) found
+            </p>
+        </div>
+    </div>
+
+    {% if transactions %}
+
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Transaction</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Type</th>
+                        <th scope="col" class="align-right">Amount</th>
+                        <th scope="col">
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for tx in transactions %}
+                        <tr>
+                            <td>
+                                <strong>
+                                    {{ tx.description or tx.category }}
+                                </strong>
+
+                                <small class="table-sub">
+                                    {% if tx.description %}
+                                        {{ tx.category }}
+                                    {% else %}
+                                        No description
+                                    {% endif %}
+                                </small>
+                            </td>
+
+                            <td>{{ tx.category }}</td>
+
+                            <td>
+                                <time datetime="{{ tx.transaction_date }}">
+                                    {{ tx.transaction_date }}
+                                </time>
+                            </td>
+
+                            <td>
+                                <span
+                                    class="type-badge {% if tx.transaction_type == 'income' %}badge-income{% else %}badge-expense{% endif %}"
+                                >
+                                    {{ tx.transaction_type|title }}
+                                </span>
+                            </td>
+
+                            <td
+                                class="align-right amount-cell {% if tx.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}"
+                            >
+                                {{ '+' if tx.transaction_type == 'income' else '−' }}₹{{ "%.2f"|format(tx.amount) }}
+                            </td>
+
+                            <td>
+                                <form
+                                    method="post"
+                                    action="{{ url_for('delete_transaction', transaction_id=tx.id) }}"
+                                    class="inline-form delete-transaction-form"
+                                >
+                                    <button
+                                        class="delete-btn"
+                                        type="submit"
+                                        aria-label="Delete transaction: {{ tx.description or tx.category }}, ₹{{ '%.2f'|format(tx.amount) }}"
+                                    >
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">⌕</span>
+
+            <strong>No matching transactions</strong>
+
+            <p>
+                No records match your current search or filters.
+                Try adjusting your filters or add a new transaction.
+            </p>
+
+            <div class="form-actions">
+                <a
+                    class="btn btn-secondary"
+                    href="{{ url_for('transactions') }}"
+                >
+                    Clear filters
+                </a>
+
+                <a
+                    class="btn btn-primary"
+                    href="{{ url_for('add_transaction') }}"
+                >
+                    + Add transaction
+                </a>
+            </div>
+        </div>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+"use strict";
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Validate the selected date range before submitting filters.
+    const filtersForm = document.getElementById("transactionFilters");
+
+    if (filtersForm) {
+        const startDate = document.getElementById("transaction-start-date");
+        const endDate = document.getElementById("transaction-end-date");
+
+        function validateDateRange() {
+            if (!startDate || !endDate) {
+                return true;
+            }
+
+            const invalidRange =
+                startDate.value !== "" &&
+                endDate.value !== "" &&
+                startDate.value > endDate.value;
+
+            endDate.setCustomValidity(
+                invalidRange
+                    ? "The end date must be on or after the start date."
+                    : ""
+            );
+
+            return !invalidRange;
+        }
+
+        if (startDate && endDate) {
+            startDate.addEventListener("change", validateDateRange);
+            endDate.addEventListener("change", validateDateRange);
+        }
+
+        filtersForm.addEventListener("submit", function (event) {
+            if (!validateDateRange()) {
+                event.preventDefault();
+                endDate.reportValidity();
+            }
+        });
+    }
+
+    // Confirm before permanently deleting a transaction.
+    document.querySelectorAll(".delete-transaction-form").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            const confirmed = window.confirm(
+                "Are you sure you want to delete this transaction? This action cannot be undone."
+            );
+
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+```

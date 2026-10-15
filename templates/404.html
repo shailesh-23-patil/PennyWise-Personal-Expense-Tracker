@@ -1,0 +1,34 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Page not found{% endblock %}
+
+{% block content %}
+
+<section class="empty-state error-page">
+
+    <span class="empty-icon" aria-hidden="true">404</span>
+
+    <span class="eyebrow">OOPS! WRONG TURN</span>
+
+    <h1>Page not found</h1>
+
+    <p>
+        We couldn't find the page you're looking for.
+        It may have been moved, deleted, or the URL may be incorrect.
+    </p>
+
+    <div class="form-actions">
+        <a class="btn btn-primary" href="{{ url_for('index') }}">
+            Go home →
+        </a>
+
+        <a class="btn btn-secondary" href="{{ url_for('transactions') }}">
+            View transactions
+        </a>
+    </div>
+
+</section>
+
+{% endblock %}
+```

@@ -1,0 +1,162 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Add transaction{% endblock %}
+
+{% block content %}
+
+<section class="page-heading">
+    <span class="eyebrow">KEEP YOUR RECORDS UP TO DATE</span>
+    <h1>Add transaction</h1>
+    <p class="muted">
+        Record your income and expenses to stay in control of your money.
+    </p>
+</section>
+
+<section class="form-panel">
+
+    <form
+        method="post"
+        class="transaction-form form-stack"
+        id="transactionForm"
+    >
+
+        <!-- Transaction type -->
+        <fieldset class="transaction-type-fieldset">
+            <legend>Transaction type</legend>
+
+            <div class="type-toggle">
+
+                <label class="type-option">
+                    <input
+                        type="radio"
+                        name="transaction_type"
+                        value="expense"
+                        checked
+                        required
+                    >
+                    <span>− Add expense</span>
+                </label>
+
+                <label class="type-option">
+                    <input
+                        type="radio"
+                        name="transaction_type"
+                        value="income"
+                        required
+                    >
+                    <span>＋ Add income</span>
+                </label>
+
+            </div>
+        </fieldset>
+
+        <!-- Amount -->
+        <label for="transaction-amount">
+            Amount (₹)
+            <input
+                id="transaction-amount"
+                type="number"
+                name="amount"
+                min="0.01"
+                max="999999999"
+                step="0.01"
+                placeholder="e.g. 500.00"
+                inputmode="decimal"
+                required
+            >
+            <span class="label-hint">
+                Enter the amount in Indian rupees.
+            </span>
+        </label>
+
+        <!-- Category -->
+        <label for="categorySelect">
+            Category
+
+            <select
+                name="category"
+                id="categorySelect"
+                required
+            >
+                <option value="">Choose a category</option>
+
+                {% for c in expense_categories %}
+                    <option
+                        value="{{ c }}"
+                        data-type="expense"
+                    >
+                        {{ c }}
+                    </option>
+                {% endfor %}
+
+                {% for c in income_categories %}
+                    <option
+                        value="{{ c }}"
+                        data-type="income"
+                        hidden
+                    >
+                        {{ c }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <span class="label-hint">
+                Choose a category that matches your transaction.
+            </span>
+        </label>
+
+        <!-- Transaction date -->
+        <label for="transaction-date">
+            Date
+
+            <input
+                id="transaction-date"
+                type="date"
+                name="transaction_date"
+                value="{{ today }}"
+                required
+            >
+        </label>
+
+        <!-- Description -->
+        <label for="transaction-description">
+            Description
+            <span class="label-hint">Optional</span>
+
+            <input
+                id="transaction-description"
+                type="text"
+                name="description"
+                maxlength="250"
+                placeholder="e.g. Lunch with friends"
+                autocomplete="off"
+            >
+            <span class="label-hint">
+                Add a short note to help you remember this transaction.
+            </span>
+        </label>
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <a
+                class="btn btn-secondary"
+                href="{{ url_for('transactions') }}"
+            >
+                Cancel
+            </a>
+
+            <button
+                class="btn btn-primary"
+                type="submit"
+            >
+                Save transaction →
+            </button>
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}
+```

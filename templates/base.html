@@ -1,0 +1,245 @@
+```html
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="theme-color" content="#f7f8fc">
+    <meta name="description"
+          content="PennyWise — manage your income, expenses, budgets and savings in one place.">
+
+    <title>{% block title %}PennyWise{% endblock %} | PennyWise</title>
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Chart.js for dashboard charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Apply saved theme before rendering the page -->
+    <script>
+        (() => {
+            try {
+                const savedTheme = localStorage.getItem('pennywise-theme');
+                const theme = savedTheme === 'dark' ? 'dark' : 'light';
+                document.documentElement.dataset.theme = theme;
+            } catch (error) {
+                document.documentElement.dataset.theme = 'light';
+            }
+        })();
+    </script>
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">
+        Skip to main content
+    </a>
+
+    <div class="app-shell">
+
+        <!-- Navigation -->
+        <header class="topbar">
+
+            <div class="topbar-left">
+                <a class="brand"
+                   href="{{ url_for('dashboard') if g.user else url_for('login') }}"
+                   aria-label="PennyWise home">
+
+                    <span class="brand-mark" aria-hidden="true">₹</span>
+
+                    <span class="brand-text">
+                        PennyWise
+                        <small>PERSONAL FINANCE</small>
+                    </span>
+                </a>
+            </div>
+
+            {% if g.user %}
+            <nav class="nav" aria-label="Main navigation">
+
+                <a class="nav-link
+                    {% if request.endpoint == 'dashboard' %}active{% endif %}"
+                   href="{{ url_for('dashboard') }}"
+                   {% if request.endpoint == 'dashboard' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon" aria-hidden="true">⌂</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a class="nav-link
+                    {% if request.endpoint == 'transactions' %}active{% endif %}"
+                   href="{{ url_for('transactions') }}"
+                   {% if request.endpoint == 'transactions' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon" aria-hidden="true">▤</span>
+                    <span>Transactions</span>
+                </a>
+
+                <a class="nav-cta"
+                   href="{{ url_for('add_transaction') }}">
+                    <span aria-hidden="true">＋</span>
+                    <span>Add transaction</span>
+                </a>
+
+                <!-- Theme toggle -->
+                <button
+                    class="theme-toggle"
+                    id="themeToggle"
+                    type="button"
+                    aria-label="Switch to dark mode"
+                    title="Change appearance">
+
+                    <span class="theme-icon" id="themeIcon"
+                          aria-hidden="true">☾</span>
+                </button>
+
+                <!-- User menu -->
+                <div class="user-menu">
+                    <span class="user-avatar" aria-hidden="true">
+                        {{ g.user['name'][0]|upper }}
+                    </span>
+
+                    <span class="user-name">
+                        <small>WELCOME BACK</small>
+                        <strong>{{ g.user['name'] }}</strong>
+                    </span>
+                </div>
+
+                <form action="{{ url_for('logout') }}"
+                      method="post"
+                      class="inline-form">
+
+                    <button class="nav-logout" type="submit">
+                        <span aria-hidden="true">↪</span>
+                        Log out
+                    </button>
+                </form>
+
+            </nav>
+            {% endif %}
+
+        </header>
+
+        <!-- Main page content -->
+        <main class="page" id="main-content">
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-stack" role="status" aria-live="polite">
+
+                    {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">
+                        <span class="flash-message">{{ message }}</span>
+
+                        <button class="flash-close"
+                                type="button"
+                                aria-label="Dismiss notification">
+                            ×
+                        </button>
+                    </div>
+                    {% endfor %}
+
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Individual page content -->
+            {% block content %}{% endblock %}
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                <span class="footer-brand">₹ PennyWise</span>
+                <span class="footer-separator">·</span>
+                Personal Expense Tracker
+                <span class="footer-separator">·</span>
+                BCA Minor Project
+            </p>
+
+            <p class="footer-note">
+                Take control of your money, one transaction at a time.
+            </p>
+        </footer>
+
+    </div>
+
+    <!-- Existing JavaScript -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <!-- Page-specific JavaScript, including dashboard charts -->
+    {% block scripts %}{% endblock %}
+
+    <!-- Theme toggle and notification dismissal -->
+    <script>
+        (() => {
+            const root = document.documentElement;
+            const toggle = document.getElementById('themeToggle');
+            const icon = document.getElementById('themeIcon');
+            const themeColor = document.querySelector('meta[name="theme-color"]');
+
+            function updateTheme(theme) {
+                root.dataset.theme = theme;
+
+                if (icon) {
+                    icon.textContent = theme === 'dark' ? '☀' : '☾';
+                }
+
+                if (toggle) {
+                    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+
+                    toggle.setAttribute(
+                        'aria-label',
+                        `Switch to ${nextTheme} mode`
+                    );
+
+                    toggle.setAttribute(
+                        'title',
+                        `Switch to ${nextTheme} mode`
+                    );
+                }
+
+                if (themeColor) {
+                    themeColor.setAttribute(
+                        'content',
+                        theme === 'dark' ? '#151722' : '#f7f8fc'
+                    );
+                }
+            }
+
+            let currentTheme =
+                root.dataset.theme === 'dark' ? 'dark' : 'light';
+
+            updateTheme(currentTheme);
+
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    currentTheme =
+                        currentTheme === 'dark' ? 'light' : 'dark';
+
+                    updateTheme(currentTheme);
+
+                    try {
+                        localStorage.setItem(
+                            'pennywise-theme',
+                            currentTheme
+                        );
+                    } catch (error) {
+                        // Theme still works for the current page.
+                    }
+                });
+            }
+
+            document.querySelectorAll('.flash-close').forEach((button) => {
+                button.addEventListener('click', () => {
+                    button.closest('.flash')?.remove();
+                });
+            });
+        })();
+    </script>
+
+</body>
+</html>
+```

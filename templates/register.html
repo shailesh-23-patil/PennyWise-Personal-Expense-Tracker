@@ -1,0 +1,127 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Create account{% endblock %}
+
+{% block content %}
+
+<section class="auth-layout">
+
+    <!-- Welcome and feature section -->
+    <div class="auth-intro">
+        <span class="eyebrow">START WITH A CLEAR PICTURE</span>
+
+        <h1>
+            Build habits.<br>
+            <span>Reach your goals.</span>
+        </h1>
+
+        <p>
+            Keep your income, expenses, and savings together
+            in one simple place. Take control of your finances
+            one transaction at a time.
+        </p>
+
+        <div class="feature-pills">
+            <span>✓ Easy tracking</span>
+            <span>✓ Monthly budgets</span>
+            <span>✓ Visual reports</span>
+        </div>
+    </div>
+
+    <!-- Registration form -->
+    <div class="auth-card">
+
+        <div class="auth-card-heading">
+            <span class="auth-icon" aria-hidden="true">＋</span>
+
+            <h2>Create your account</h2>
+
+            <p class="muted">
+                Get started with PennyWise in just a few steps.
+            </p>
+        </div>
+
+        <form method="post" class="form-stack" id="registerForm">
+
+            <!-- Full name -->
+            <label for="register-name">
+                Full name
+
+                <input
+                    id="register-name"
+                    type="text"
+                    name="name"
+                    maxlength="80"
+                    required
+                    autocomplete="name"
+                    placeholder="Enter your full name"
+                >
+            </label>
+
+            <!-- Email address -->
+            <label for="register-email">
+                Email address
+
+                <input
+                    id="register-email"
+                    type="email"
+                    name="email"
+                    maxlength="160"
+                    required
+                    autocomplete="email"
+                    placeholder="you@example.com"
+                >
+            </label>
+
+            <!-- Password -->
+            <label for="register-password">
+                Password
+                <span class="label-hint">At least 8 characters</span>
+
+                <input
+                    id="register-password"
+                    type="password"
+                    name="password"
+                    minlength="8"
+                    required
+                    autocomplete="new-password"
+                    placeholder="Create a strong password"
+                    aria-describedby="password-help"
+                >
+
+                <span id="password-help" class="label-hint">
+                    Choose a password that you don't use on other websites.
+                </span>
+            </label>
+
+            <!-- Submit -->
+            <button
+                class="btn btn-primary btn-full"
+                type="submit"
+            >
+                Create account <span aria-hidden="true">→</span>
+            </button>
+
+        </form>
+
+        <div class="auth-divider">
+            <span>ALREADY REGISTERED?</span>
+        </div>
+
+        <p class="auth-switch">
+            Already have an account?
+            <a href="{{ url_for('login') }}">Log in</a>
+        </p>
+
+        <p class="auth-security-note">
+            <span aria-hidden="true">🔒</span>
+            Your account helps keep your financial records separate.
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}
+```

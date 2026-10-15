@@ -1,0 +1,111 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Log in{% endblock %}
+
+{% block content %}
+
+<section class="auth-layout">
+
+    <!-- Welcome section -->
+    <div class="auth-intro">
+        <span class="eyebrow">YOUR MONEY, MADE CLEAR</span>
+
+        <h1>
+            Small steps.<br>
+            <span>Better finances.</span>
+        </h1>
+
+        <p>
+            Understand your spending, set monthly budgets,
+            and make your money work for you.
+        </p>
+
+        <div class="mini-stats">
+            <div>
+                <strong>Track</strong>
+                <small>Every transaction</small>
+            </div>
+
+            <div>
+                <strong>Plan</strong>
+                <small>Monthly budgets</small>
+            </div>
+
+            <div>
+                <strong>Grow</strong>
+                <small>Your savings</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login form -->
+    <div class="auth-card">
+
+        <div class="auth-card-heading">
+            <span class="auth-icon" aria-hidden="true">↗</span>
+            <h2>Welcome back!</h2>
+            <p class="muted">
+                Log in to view your financial dashboard.
+            </p>
+        </div>
+
+        <form method="post" class="form-stack" id="loginForm">
+
+            <label for="login-email">
+                Email address
+
+                <input
+                    id="login-email"
+                    type="email"
+                    name="email"
+                    required
+                    autocomplete="email"
+                    placeholder="you@example.com"
+                    maxlength="254"
+                    autofocus
+                >
+            </label>
+
+            <label for="login-password">
+                Password
+
+                <input
+                    id="login-password"
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                >
+            </label>
+
+            <button
+                class="btn btn-primary btn-full"
+                type="submit"
+            >
+                Log in <span aria-hidden="true">→</span>
+            </button>
+
+        </form>
+
+        <div class="auth-divider">
+            <span>NEW HERE?</span>
+        </div>
+
+        <p class="auth-switch">
+            Don't have an account?
+            <a href="{{ url_for('register') }}">Create an account</a>
+        </p>
+
+        <p class="auth-security-note">
+            <span aria-hidden="true">🔒</span>
+            Your personal financial dashboard is protected by your account.
+        </p>
+
+    </div>
+
+</section>
+
+{% endblock %}
+```

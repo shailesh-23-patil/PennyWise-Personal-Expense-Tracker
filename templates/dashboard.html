@@ -1,0 +1,493 @@
+```html
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Dashboard heading -->
+<section class="page-heading heading-row">
+    <div>
+        <span class="eyebrow">YOUR FINANCIAL OVERVIEW</span>
+        <h1>Dashboard</h1>
+        <p class="muted">Understand your money. Make smarter decisions.</p>
+    </div>
+
+    <form method="get" class="month-picker">
+        <label for="month">Viewing month</label>
+        <input
+            id="month"
+            type="month"
+            name="month"
+            value="{{ month }}"
+            onchange="this.form.submit()"
+            aria-label="Select dashboard month"
+        >
+    </form>
+</section>
+
+<!-- Financial summary cards -->
+<section class="stats-grid" aria-label="Financial summary">
+
+    <article class="stat-card stat-balance">
+        <div class="stat-top">
+            <span>Monthly savings</span>
+            <span class="stat-icon" aria-hidden="true">↗</span>
+        </div>
+        <div class="stat-value">
+            ₹{{ "%.2f"|format(savings) }}
+        </div>
+        <div class="stat-note">Income minus expenses</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Total income</span>
+            <span class="stat-icon icon-green" aria-hidden="true">＋</span>
+        </div>
+        <div class="stat-value">
+            ₹{{ "%.2f"|format(totals.income) }}
+        </div>
+        <div class="stat-note">For {{ month }}</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>Total expenses</span>
+            <span class="stat-icon icon-red" aria-hidden="true">−</span>
+        </div>
+        <div class="stat-value">
+            ₹{{ "%.2f"|format(totals.expense) }}
+        </div>
+        <div class="stat-note">For {{ month }}</div>
+    </article>
+
+    <article class="stat-card">
+        <div class="stat-top">
+            <span>All-time savings</span>
+            <span class="stat-icon" aria-hidden="true">◷</span>
+        </div>
+        <div class="stat-value">
+            ₹{{ "%.2f"|format(lifetime.income - lifetime.expense) }}
+        </div>
+        <div class="stat-note">Across all recorded months</div>
+    </article>
+
+</section>
+
+<!-- Financial charts -->
+<section class="dashboard-grid" aria-label="Financial charts">
+
+    <article class="panel chart-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Income vs expenses</h2>
+                <p class="muted">Your latest recorded months</p>
+            </div>
+            <span class="panel-symbol" aria-hidden="true">▥</span>
+        </div>
+
+        {% if chart_rows %}
+            <div class="chart-wrap">
+                <canvas
+                    id="trendChart"
+                    role="img"
+                    aria-label="Bar chart comparing monthly income and expenses"
+                ></canvas>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true">▥</span>
+                <strong>Your chart will appear here</strong>
+                <p>Add transactions to see your monthly trends.</p>
+                <a class="text-link" href="{{ url_for('add_transaction') }}">
+                    Add your first transaction →
+                </a>
+            </div>
+        {% endif %}
+    </article>
+
+    <article class="panel chart-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Spending breakdown</h2>
+                <p class="muted">Expenses by category · {{ month }}</p>
+            </div>
+            <span class="panel-symbol" aria-hidden="true">◉</span>
+        </div>
+
+        {% if category_rows %}
+            <div class="donut-wrap">
+                <canvas
+                    id="categoryChart"
+                    role="img"
+                    aria-label="Doughnut chart showing expenses by category"
+                ></canvas>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <span class="empty-icon" aria-hidden="true">◉</span>
+                <strong>No expenses this month</strong>
+                <p>Add an expense to see the breakdown.</p>
+                <a class="text-link" href="{{ url_for('add_transaction') }}">
+                    Add an expense →
+                </a>
+            </div>
+        {% endif %}
+    </article>
+
+</section>
+
+<!-- Budget and recent transactions -->
+<section class="dashboard-grid lower-grid">
+
+    <article class="panel budget-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Monthly budget</h2>
+                <p class="muted">Your spending limit for {{ month }}</p>
+            </div>
+            <span class="panel-symbol" aria-hidden="true">◎</span>
+        </div>
+
+        {% if budget %}
+            <div class="budget-numbers">
+                <strong>₹{{ "%.2f"|format(totals.expense) }}</strong>
+                <span>of ₹{{ "%.2f"|format(budget) }}</span>
+            </div>
+
+            <div
+                class="progress-track"
+                role="progressbar"
+                aria-label="Monthly budget used"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="{{ [budget_used, 100]|min }}"
+            >
+                <div
+                    class="progress-fill {% if budget_used >= 100 %}over-budget{% endif %}"
+                    style="width: {{ [budget_used, 100]|min }}%;"
+                ></div>
+            </div>
+
+            <p class="muted small">
+                {% if budget_used >= 100 %}
+                    Budget reached — review your spending.
+                {% elif budget_used >= 80 %}
+                    You're approaching your budget limit.
+                    {{ "%.1f"|format(budget_used) }}% used.
+                {% else %}
+                    {{ "%.1f"|format(budget_used) }}% of your budget used.
+                {% endif %}
+            </p>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>No budget set yet</strong>
+                <p>Choose a monthly limit to keep spending on track.</p>
+            </div>
+        {% endif %}
+
+        <form
+            action="{{ url_for('save_budget') }}"
+            method="post"
+            class="budget-form"
+        >
+            <input type="hidden" name="month" value="{{ month }}">
+
+            <label for="budget-amount">Budget amount (₹)</label>
+
+            <div class="input-button">
+                <input
+                    id="budget-amount"
+                    name="amount"
+                    type="number"
+                    min="0.01"
+                    max="999999999999"
+                    step="0.01"
+                    required
+                    placeholder="e.g. 10000"
+                    value="{{ '%.2f'|format(budget) if budget else '' }}"
+                >
+
+                <button class="btn btn-primary" type="submit">
+                    Save budget
+                </button>
+            </div>
+        </form>
+    </article>
+
+    <article class="panel recent-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Recent transactions</h2>
+                <p class="muted">Your latest activity</p>
+            </div>
+
+            <a class="text-link" href="{{ url_for('transactions') }}">
+                View all →
+            </a>
+        </div>
+
+        {% if recent %}
+            <div class="recent-list">
+                {% for tx in recent %}
+                    <div class="recent-item">
+
+                        <span
+                            class="category-dot {% if tx.transaction_type == 'income' %}dot-income{% else %}dot-expense{% endif %}"
+                            aria-hidden="true"
+                        >
+                            {{ '＋' if tx.transaction_type == 'income' else '−' }}
+                        </span>
+
+                        <div class="recent-details">
+                            <strong>{{ tx.category }}</strong>
+                            <small>
+                                {{ tx.description or tx.transaction_date }}
+                                · {{ tx.transaction_date }}
+                            </small>
+                        </div>
+
+                        <strong
+                            class="recent-amount {% if tx.transaction_type == 'income' %}amount-income{% else %}amount-expense{% endif %}"
+                        >
+                            {{ '+' if tx.transaction_type == 'income' else '−' }}₹{{ "%.2f"|format(tx.amount) }}
+                        </strong>
+
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <div class="empty-state compact">
+                <strong>No transactions yet</strong>
+                <p>Start by adding your first income or expense.</p>
+                <a class="text-link" href="{{ url_for('add_transaction') }}">
+                    Add transaction →
+                </a>
+            </div>
+        {% endif %}
+    </article>
+
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+"use strict";
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Chart data supplied by Flask.
+    const trendRows = {{ chart_rows|map(attribute='month')|list|tojson }};
+    const incomeValues = {{ chart_rows|map(attribute='income')|list|tojson }};
+    const expenseValues = {{ chart_rows|map(attribute='expense')|list|tojson }};
+
+    const categoryLabels = {{ category_rows|map(attribute='category')|list|tojson }};
+    const categoryValues = {{ category_rows|map(attribute='total')|list|tojson }};
+
+    if (typeof Chart === "undefined") {
+        console.error("Chart.js could not be loaded.");
+        return;
+    }
+
+    const root = document.documentElement;
+
+    // Read colors from the active CSS theme.
+    function getThemeColors() {
+        const styles = getComputedStyle(root);
+
+        return {
+            text: styles.getPropertyValue("--text").trim() || "#202334",
+            muted: styles.getPropertyValue("--muted").trim() || "#73788c",
+            border: styles.getPropertyValue("--border").trim() || "#e8eaf0",
+            surface: styles.getPropertyValue("--surface").trim() || "#ffffff"
+        };
+    }
+
+    const chartInstances = [];
+
+    // Shared chart styling.
+    function getCommonOptions() {
+        const colors = getThemeColors();
+
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 350
+            },
+            plugins: {
+                legend: {
+                    position: "bottom",
+                    labels: {
+                        color: colors.text,
+                        usePointStyle: true,
+                        boxWidth: 8,
+                        padding: 16
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.dataset.label || context.label || "";
+                            const rawValue = Number(context.raw) || 0;
+
+                            return label + ": ₹" + rawValue.toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    // Income versus expenses chart.
+    const trendCanvas = document.getElementById("trendChart");
+
+    if (trendCanvas) {
+        const options = getCommonOptions();
+
+        options.scales = {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: getThemeColors().border
+                },
+                ticks: {
+                    color: getThemeColors().muted,
+                    callback: function (value) {
+                        return "₹" + Number(value).toLocaleString("en-IN");
+                    }
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    color: getThemeColors().muted
+                }
+            }
+        };
+
+        const trendChart = new Chart(trendCanvas, {
+            type: "bar",
+            data: {
+                labels: trendRows,
+                datasets: [
+                    {
+                        label: "Income",
+                        data: incomeValues,
+                        backgroundColor: "#18a875",
+                        borderRadius: 6,
+                        maxBarThickness: 28
+                    },
+                    {
+                        label: "Expenses",
+                        data: expenseValues,
+                        backgroundColor: "#f28b82",
+                        borderRadius: 6,
+                        maxBarThickness: 28
+                    }
+                ]
+            },
+            options: options
+        });
+
+        chartInstances.push(trendChart);
+    }
+
+    // Expense categories doughnut chart.
+    const categoryCanvas = document.getElementById("categoryChart");
+
+    if (categoryCanvas) {
+        const categoryOptions = getCommonOptions();
+
+        categoryOptions.cutout = "68%";
+
+        categoryOptions.plugins.tooltip.callbacks.label = function (context) {
+            const label = context.label || "";
+            const amount = Number(context.raw) || 0;
+
+            return label + ": ₹" + amount.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        };
+
+        const categoryChart = new Chart(categoryCanvas, {
+            type: "doughnut",
+            data: {
+                labels: categoryLabels,
+                datasets: [
+                    {
+                        data: categoryValues,
+                        backgroundColor: [
+                            "#6c63ff",
+                            "#18a875",
+                            "#f5b544",
+                            "#f28b82",
+                            "#5599e8",
+                            "#b17ce0",
+                            "#49b9c7",
+                            "#e27da7",
+                            "#9aa6b2",
+                            "#b2c96a"
+                        ],
+                        borderWidth: 2,
+                        borderColor: getThemeColors().surface,
+                        hoverOffset: 6
+                    }
+                ]
+            },
+            options: categoryOptions
+        });
+
+        chartInstances.push(categoryChart);
+    }
+
+    // Update chart text and grid colors when the theme changes.
+    function updateChartsForTheme() {
+        const colors = getThemeColors();
+
+        chartInstances.forEach(function (chart) {
+            if (chart.options.plugins && chart.options.plugins.legend) {
+                chart.options.plugins.legend.labels.color = colors.text;
+            }
+
+            if (chart.options.scales) {
+                Object.values(chart.options.scales).forEach(function (scale) {
+                    if (scale.ticks) {
+                        scale.ticks.color = colors.muted;
+                    }
+
+                    if (scale.grid && scale.grid.display !== false) {
+                        scale.grid.color = colors.border;
+                    }
+                });
+            }
+
+            if (chart.config.type === "doughnut") {
+                chart.data.datasets.forEach(function (dataset) {
+                    dataset.borderColor = colors.surface;
+                });
+            }
+
+            chart.update("none");
+        });
+    }
+
+    // Observe theme changes made by the theme toggle in script.js.
+    const themeObserver = new MutationObserver(updateChartsForTheme);
+
+    themeObserver.observe(root, {
+        attributes: true,
+        attributeFilter: ["data-theme"]
+    });
+});
+</script>
+{% endblock %}
+```
